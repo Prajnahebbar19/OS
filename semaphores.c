@@ -2,7 +2,7 @@
 #include <stdlib.h>
 int mutex = 1;
 int full = 0;
-int empty = 10, s = 0;
+int empty = 6, s = 0;
 void wait()
 {
    --mutex;
@@ -37,7 +37,7 @@ void consumer()
 
     ++empty;
     printf("\nConsumer consumes item %d",s);
-    s--;
+    s                      --;
 
 
    signal();
