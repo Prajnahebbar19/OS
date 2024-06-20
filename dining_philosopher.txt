@@ -1,0 +1,93 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <unistd.h>
+
+#define MAX_PHILOSOPHERS 100 
+
+sem_t mutex; 
+sem_t mutex2; 
+
+int philosophers[MAX_PHILOSOPHERS]; 
+
+void* one_eat_at_a_time(void* arg) {
+    int philosopher = ((int) arg);
+
+    sem_wait(&mutex); 
+    printf("Philosopher %d is granted to eat\n", philosopher);
+    sleep(1); 
+    printf("Philosopher %d has finished eating\n", philosopher);
+    sem_post(&mutex); 
+
+    return NULL;
+}
+
+void* two_eat_at_a_time(void* arg) {
+    int philosopher = ((int) arg);
+
+    sem_wait(&mutex2); 
+    printf("Philosopher %d is granted to eat\n", philosopher);
+    sleep(1); 
+    printf("Philosopher %d has finished eating\n", philosopher);
+    sem_post(&mutex2);
+    return NULL;
+}
+
+int main() {
+    int N;
+    printf("Enter the total number of philosophers: ");
+    scanf("%d", &N);
+
+    int hungry_count;
+    printf("How many are hungry: ");
+    scanf("%d", &hungry_count);
+
+    int hungry_philosophers[hungry_count];
+    for (int i = 0; i < hungry_count; i++) {
+        printf("Enter philosopher %d position (1 to %d): ", i + 1, N);
+        scanf("%d", &hungry_philosophers[i]);
+        hungry_philosophers[i]--; 
+    }
+
+    pthread_t thread[hungry_count];
+    int choice;
+
+    sem_init(&mutex, 0, 1); 
+    sem_init(&mutex2, 0, 2);
+    do {
+        printf("\n1. One can eat at a time\n2. Two can eat at a time\n3. Exit\nEnter your choice: ");
+        scanf("%d", &choice);
+        switch (choice) {
+            case 1:
+                printf("Allow one philosopher to eat at any time\n");
+                for (int i = 0; i < hungry_count; i++) {
+                    philosophers[i] = hungry_philosophers[i]; 
+                    pthread_create(&thread[i], NULL, one_eat_at_a_time, &philosophers[i]);
+                }
+                for (int i = 0; i < hungry_count; i++) {
+                    pthread_join(thread[i], NULL);
+                }
+                break;
+            case 2:
+                printf("Allow two philosophers to eat at the same time\n");
+                for (int i = 0; i < hungry_count; i++) {
+                    philosophers[i] = hungry_philosophers[i]; 
+                    pthread_create(&thread[i], NULL, two_eat_at_a_time, &philosophers[i]);
+                }
+                for (int i = 0; i < hungry_count; i++) {
+                    pthread_join(thread[i], NULL);
+                }
+                break;
+            case 3:
+                printf("Exit\n");
+                break;
+            default:
+                printf("Invalid choice. Please try again.\n");
+        }
+    } while (choice != 3);
+
+    sem_destroy(&mutex); 
+    sem_destroy(&mutex2); 
+    return 0;
+}
